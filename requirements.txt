@@ -2,3 +2,6 @@ beautifulsoup4
 selenium
 python-magic
 tqdm
+pandas
+time
+random
