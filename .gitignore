@@ -1,0 +1,37 @@
+# Pycharm project files
+.idea/
+
+# VSCode project files
+.vscode/
+
+# Virtual Env directory
+venv/
+
+# Log
+*.log
+
+# INI
+*.ini
+
+# pyc
+*.pyc
+
+# Python cache
+__pycache__/
+
+# IPython Notebook cache
+.ipynb_checkpoints/
+
+# Mac
+.DS_Store
+
+# Temp directory
+tmp/
+sample/
+src/
+curl_save/
+save/
+selenium_driver/
+
+*.deb
+*.zip
