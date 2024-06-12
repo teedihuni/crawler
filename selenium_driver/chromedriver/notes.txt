@@ -1,0 +1,8 @@
+---------ChromeDriver 90.0.4430.24 (2021-03-15)---------
+Supports Chrome version 90
+Resolved issue 3708: GetElementLocation's inView fails for elements in shadow DOM [Pri-]
+Resolved issue 3721: Collect performance log for service worker when enabled [Pri-2]
+Resolved issue 3731: AdbImpl::GetPidByName does not work correctly on non-standard Android OS's like on OnePlus [Pri-]
+Resolved issue 3733: Catastrophic failure with domain on localhost [Pri-]
+Resolved issue 3734: Driver should Error Attempting to set Cookie on Wrong Domain [Pri-]
+Resolved issue 3743: Refactor call function and fix remove element issue [Pri-2]
