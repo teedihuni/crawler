@@ -7,7 +7,6 @@ from collections import defaultdict
 from tqdm import tqdm
 from selenium.common.exceptions import InvalidSessionIdException
 from urllib.parse import quote
-import requests
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -26,7 +25,7 @@ from selenium_driver.selenium_init import *
 
 logging.basicConfig(
     level=logging.INFO, # level=logging.DEBUG,
-    filename='/home/crawling/crawling/shopping_mall_crawler/log/SSFSHOP.log',
+    filename='/home/dhlee2/workspace/crawling_code/shopping_mall_crawler/save/log/SSFSHOP.log',
     format="%(asctime)s:%(levelname)s:%(message)s"
 )
 logger = logging.getLogger(__name__)
@@ -78,15 +77,15 @@ class Crawler:
                 logging.warning(f'Page Load failed: {page_url} / Error: {e}')
                 break
         
-    def make_save_folder(self, ctgr, brand_name ,item_name):
-        
-        img_folder_path = os.path.join(self.save_path, self.mall ,brand_name, ctgr ,item_name)        
+    def make_save_folder(self, ctgr, sub_ctgr_1, sub_ctgr_2, brand_name, sex, item_name):
+    
+        img_folder_path = os.path.join(self.save_path, self.mall ,ctgr, sub_ctgr_1, sub_ctgr_2, brand_name, sex, item_name)        
         os.makedirs(img_folder_path, exist_ok=True)        
-        self.ctgr_items_count[ctgr] += 1
+        self.ctgr_items_count[sub_ctgr_1] += 1
         
         return img_folder_path
 
-    def download_sumnail_image(self, ctgr ,img_folder_path, item_name, img_info, index, downloaded_imglist):
+    def download_sumnail_image(self, ctgr, sub_ctgr_1, img_folder_path, item_name, img_info, index, downloaded_imglist):
         
         if 'https' not in img_info:
             img_info = 'https'+img_info
@@ -110,7 +109,7 @@ class Crawler:
                     encoded_url = quote(img_info, safe='/:[]%')
                     urlretrieve(encoded_url, img_save_path)
                     
-                self.ctgr_imgs_count[ctgr] +=1
+                self.ctgr_imgs_count[sub_ctgr_1] +=1
                 
                 # MIME 타입 확인 및 파일 확장자 변경
                 mime_type = magic.from_file(img_save_path, mime=True).split('/')[-1]
@@ -137,15 +136,9 @@ class Crawler:
             writer = csv.writer(tsv_file, delimiter='\t')
             writer.writerow([self.mall, item_name, ctgr,img_save_path[self.path_index:], main_item_image])
         
-    def get_sumnail_image(self, ctgr, current_url, page_num, idx):
+    def get_sumnail_image(self, sex, ctgr, current_url, page_num, idx):
         
         time.sleep(2)
-        
-        # =================================================== 
-        # 코드 작성하고 쇼핑몰 상품 검색해보니 색상을 추출할 필요가 없음..(다른 색상으로 상품 각각 등록되어있음)
-        # 색상 추출 
-        # color_elements = self.browser.find_elements(By.CSS_SELECTOR,'span.color-thumbs > label')
-        # color_counts = len(color_elements)
         
         issue_detect = True
 
@@ -158,6 +151,16 @@ class Crawler:
                 # 상품
                 product_name_element = self.browser.find_element(By.CSS_SELECTOR, 'div.gods-name')
                 product_name = change_word(product_name_element.text)
+
+                # 카테고리 정보 추출
+                ctgr_tree_element = self.browser.find_elements(By.CSS_SELECTOR, 'div.breadcrumb li')[-1]
+                ctgr_tree = ctgr_tree_element.text
+                ctgr_tree = ctgr_tree.split('/')
+                if len(ctgr_tree) < 2:
+                    ctgr_tree.append(ctgr_tree[0])
+                sub_ctgr_1 = ctgr_tree[0]
+                sub_ctgr_2 = ctgr_tree[1]
+
 
                 break #정상적으로 추출했으면 탈출
 
@@ -187,15 +190,14 @@ class Crawler:
         except Exception as e:
             print(f'이미지 추출 에러 : {e}')
 
-      
 
         # 상품 이미지 저장
         try: 
             if img_url_list :
-                img_folder_path = self.make_save_folder(ctgr, brand_name ,product_name)
+                img_folder_path = self.make_save_folder(ctgr, sub_ctgr_1, sub_ctgr_2, brand_name, sex, product_name)
                 downloaded_imglist = [os.path.splitext(path)[0] for path in os.listdir(img_folder_path)] 
                 for index, img_info in enumerate(img_url_list):
-                    self.download_sumnail_image(ctgr ,img_folder_path, product_name, img_info, index, downloaded_imglist)
+                    self.download_sumnail_image(ctgr, sub_ctgr_1, img_folder_path, product_name, img_info, index, downloaded_imglist)
 
             else:
                 print('상품이미지가 없음')
@@ -203,76 +205,12 @@ class Crawler:
             print(f'상품 이미지 저장 에러 : {e}')
             logging.info(f'상품 이미지 저장 에러 : {e}')
             return
-        
-        #====================================================================================================================
-        # 색상 선택 없을때는 그냥 다운로드
-        # if color_counts == 0:  
-                  
-        #     # 이미지 추출            
-        #     try: 
-        #         img_container= self.browser.find_element(By.CSS_SELECTOR,'#godsTabView > div.gods-detail-img')
-        #         img_elements = BeautifulSoup(img_container.get_attribute('innerHTML'), features='html.parser').select('img')
-        #         img_url_list = [elements['data-original'] for elements in img_elements]
-                
-        #     except Exception as e:
-        #         print(f'이미지 추출 에러 : {e}')
-
-        #     # 상품
-        #     product_name_element = self.browser.find_element(By.CSS_SELECTOR, 'div.gods-name')
-        #     product_name = change_word(product_name_element.text)        
-
-        #     # 상품 이미지 저장
-        #     try: 
-        #         if img_url_list :
-        #             img_folder_path = self.make_save_folder(ctgr, brand_name ,product_name)
-        #             downloaded_imglist = [os.path.splitext(path)[0] for path in os.listdir(img_folder_path)] 
-        #             for index, img_info in enumerate(img_url_list):
-        #                 self.download_sumnail_image(ctgr ,img_folder_path, product_name, img_info, index, downloaded_imglist)
-
-        #         else:
-        #             print('상품이미지가 없음')
-        #     except Exception as e:
-        #         print(f'상품 이미지 저장 에러 : {e}')
-        #         logging.info(f'상품 이미지 저장 에러 : {e}')
-                
-        # #========================================================================================================================
-        # else : #색상 선택 가능한 경우
-        #     for idx in range(color_counts):
-        #         if idx > 0 :
-        #             color_elements = self.browser.find_elements(By.CSS_SELECTOR,'span.color-thumbs > label')
-        #             color_elements[idx].click()
-        #         # 이미지 추출            
-        #         try: 
-        #             img_container= self.browser.find_element(By.CSS_SELECTOR,'#godsTabView > div.gods-detail-img')
-        #             img_elements = BeautifulSoup(img_container.get_attribute('innerHTML'), features='html.parser').select('img')
-        #             img_url_list = [elements['data-original'] for elements in img_elements]
-                    
-        #         except Exception as e:
-        #             print(f'이미지 추출 에러 : {e}')
-
-        #         # 상품
-        #         product_name_element = self.browser.find_element(By.CSS_SELECTOR, 'div.gods-name')
-        #         product_name = change_word(product_name_element.text)        
-
-        #         # 상품 이미지 저장
-        #         try: 
-        #             if img_url_list :
-        #                 img_folder_path = self.make_save_folder(ctgr, brand_name ,product_name)
-        #                 downloaded_imglist = [os.path.splitext(path)[0] for path in os.listdir(img_folder_path)] 
-        #                 for index, img_info in enumerate(img_url_list):
-        #                     self.download_sumnail_image(ctgr ,img_folder_path, product_name, img_info, index, downloaded_imglist)
-
-        #             else:
-        #                 print('상품이미지가 없음')
-        #         except Exception as e:
-        #             print(f'상품 이미지 저장 에러 : {e}')
-        #             logging.info(f'상품 이미지 저장 에러 : {e}')
-                   
+                           
         
 
     def do_crawling(self, ctgr_link_tree):
         # 29CM 카테고리별 크롤링
-        for main_ctgr , ctgr_link, unique_link in (ctgr_link_tree):
+        for sex, main_ctgr , ctgr_link, unique_link in (ctgr_link_tree):
             self.tsv_file_name = os.path.join(self.save_path, f'{self.mall}/{change_tsv_name(main_ctgr)}_{get_current_time()}') # .tsv 파일명 지정
             with open(f'{self.tsv_file_name}.tsv', 'wt') as tsv_file: # .tsv 파일 생성
                 writer = csv.writer(tsv_file, delimiter='\t')
@@ -288,26 +226,7 @@ class Crawler:
                 print(f'Crawling category {main_ctgr} - Start page {page_num} ....')
                 logging.info(f'Crawling category {main_ctgr} - Start page {page_num} ....')
                 
-                while True:
-                    try:
-                        # 상품 리스트 페이지 요청
-                        time.sleep(get_random_number())
-                        self.browser.get(page_url)
-                        # 페이지 정보가 로드될 때 까지 대기
-                        self.wait_page.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.list_goods')))
-                        break
-                        
-                    except InvalidSessionIdException:
-                        # Invalid Session Id Exception에 대한 특별한 처리
-                        print('Invalid session id , starting a new browser session...')
-                        self.browser.quit()  # 현재 브라우저 인스턴스 종료
-                        self.start_browser()  # 새로운 브라우저 인스턴스 시작
-                        
-                    except Exception as e:
-                        print(f'Page Load failed: {page_url} / Error: {e}')
-                        logging.warning(f'Page Load failed: {page_url} / Error: {e}')
-                        break
-                    
+                self.browser_control(page_url,'div.list_goods')                    
                 time.sleep(2)
                 
                 # 페이지 내 상품 개수 추출
@@ -326,17 +245,16 @@ class Crawler:
                     logging.warning(f'Item not found - URL: {page_url}')
                     break
 
-                        
                 # test 세팅
-                # if page_num == 3:
-                #     break
+                if page_num == 2:
+                    break
                 
                 # 상품 진입 링크가 없어서 click 방식으로 진입                           
                 for idx in tqdm(range(item_count_inpage),desc='진행중'):
                     
-                    # # test 세팅
-                    # if idx == 4:
-                    #     break
+                    # test 세팅
+                    if idx == 2:
+                        break
                         
                     if idx > 0:
                         self.browser.get(page_url)
@@ -348,25 +266,28 @@ class Crawler:
                     button = item_elements[idx]
                     button.click()
 
+                    current_url = self.browser.current_url
                     # 학습 이미지 크롤링             
-                    self.get_sumnail_image(main_ctgr, current_url ,page_num, idx)
+                    self.get_sumnail_image(sex, main_ctgr, current_url ,page_num, idx)
 
                 page_num += 1
 
             category_exit_msg_v2(main_ctgr, page_num-1, self.ctgr_items_count, self.ctgr_imgs_count)
-            os.rename(f'{self.tsv_file_name}.tsv', f'{self.tsv_file_name}_{get_current_time()}.tsv') # .tsv 파일명 변경
+            #
         
         # 크롤링 요약 정보 저장
         ctgr_info_file_name = os.path.join(self.save_path, f'{self.mall}/크롤링요약_{get_current_time()}.tsv')
-        with open(f'{ctgr_info_file_name}.tsv', 'wt') as ctgr_info_file:
+        file_exists = os.path.isfile(ctgr_info_file_name)
+        with open(f'{ctgr_info_file_name}', 'a', newline = '') as ctgr_info_file:
             writer = csv.writer(ctgr_info_file, delimiter='\t')
-            writer.writerow(['category', 'product_count','image_count'])
-            for (ctgr_info, product_count),(_, image_count) in zip(sorted(self.ctgr_items_count.items()),sorted(self.ctgr_imgs_count.items())):
 
-                writer.writerow([ctgr_info, product_count, image_count])
+            if not file_exists:
+                writer.writerow(['category', 'product_count','image_count'])
+            for (ctgr_info, product_count),(_, image_count) in zip(sorted(self.ctgr_items_count.items()),sorted(self.ctgr_imgs_count.items())):
+                writer.writerow([main_ctgr, ctgr_info, product_count, image_count, get_current_timenow()])
                 
 import os, os.path as osp
-SAVE_PATH = '/home/crawling/crawling/crawling_img_save/crawling'							
+SAVE_PATH = '/home/dhlee2/workspace/crawling_code/shopping_mall_crawler/save'							
 DRIBER_PATH = osp.join(os.getcwd(), 'selenium_driver', 'chromedriver')
 
 if __name__ == '__main__':
@@ -384,10 +305,12 @@ if __name__ == '__main__':
         os.mkdir(f'{args.save_path}/{args.mall}')
 
     # 카테고리 크롤링    
-    category_link_tree = [['아우터','Outerwear','SFMA41A07'],['아우터','Outerwear','SFMA42A05'],
-                     ['하의','Pants-Trousers','SFMA41A04'], ['하의','Pants-Trousers','SFMA42A04'],
-                     ['치마','Skirts','SFMA41A05']]
+    category_link_tree = [['여성','신발','WomensShoes','SFMA46A12'], 
+                          ['남성','신발','MensShoes','SFMA46A18']]
 
+    # category_link_tree = [['아우터','Outerwear','SFMA41A07'],['아우터','Outerwear','SFMA42A05'],
+    #                 ['하의','Pants-Trousers','SFMA41A04'], ['하의','Pants-Trousers','SFMA42A04'],
+    #                 ['치마','Skirts','SFMA41A05']]
 
     crawler = Crawler(args.mall, args.save_path, args.driver_path)
     crawler.do_crawling(category_link_tree)
