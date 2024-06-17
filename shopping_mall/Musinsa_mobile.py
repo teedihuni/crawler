@@ -40,11 +40,12 @@ logger = logging.getLogger(__name__)
 '''
 
 class Crawler:
-    def __init__(self, mall, save_path, driver_path):
+    def __init__(self, mall, save_path, driver_path, test):
         self.tsv_file_name = '' # .tsv 파일명
         self.mall = mall # 크롤링 대상 쇼핑몰
         self.save_path = save_path # 저장 경로 저장
         self.driver_path = driver_path
+        self.testing = test
         self.path_index = len(save_path) - len(save_path.rstrip('/').split('/')[-1]) # 저장 경로 제거를 위한 index 계산
         self.ctgr_items_count = defaultdict(int) # 세부 카테고리별 크롤링 상품 개수
         self.ctgr_imgs_count = defaultdict(int) # 세부 카테고리별 크롤링 이미지 개수
@@ -131,10 +132,10 @@ class Crawler:
             os.rename(img_save_path, new_file_path)
             img_save_path = new_file_path
 
-        if index == 0:
-            main_item_image = True
-        else:
-            main_item_image = False
+        # if index == 0:
+        #     main_item_image = True
+        # else:
+        #     main_item_image = False
 
         # with open(f'{self.tsv_file_name}.tsv', 'at') as tsv_file: # .tsv 파일 생성
         #     writer = csv.writer(tsv_file, delimiter='\t')
@@ -173,13 +174,17 @@ class Crawler:
             # 성별 추출
             error = '성별'
             sex_element = self.browser.find_elements(By.CSS_SELECTOR,'dd.sc-18j0po5-4.fedfUS span')
-            sex_list = ['여성', '남성', '여성, 남성','남성, 여성']
+            sex_list = ['여성', '남성', '여성, 남성','남성, 여성', '라이프']
             sex_info = [case.text for case in sex_element if case.text in sex_list][0]
             if sex_info not in ['여성','남성']:
                 sex_info = '혼성'
             
         except Exception as e:
             print(f'{error} 부분 에러 {e}')
+            if error == '성별':
+                sex_info = '혼성'
+            else:
+                return
 
 
         # 상품 이미지 저장
@@ -237,17 +242,18 @@ class Crawler:
                         break  # 더 이상 스크롤할 페이지가 없을 때
                     last_height = new_height  # 새로운 높이를 이전 높이로 업데이트
 
-                    break # 테스트용 break
+                    if self.testing:
+                        break # 테스트용 break
                 
-
-                ## test 세팅
                 full_item_list = full_item_list.to_list()
-                full_item_list = full_item_list[:2]
+                ## test 세팅
+                if self.testing:
+                    full_item_list = full_item_list[:2]
                 
                 
                 # 학습 이미지 크롤링
                 for idx in tqdm(range(len(full_item_list))):
-                    print(f'{sub_ctgr} {idx+1} 번째 상품 crawling 중 : {full_item_list[idx]}')                       
+                    tqdm.write(f'{sub_ctgr} {idx+1} 번째 상품 crawling 중 : {full_item_list[idx]}')                       
 
                     self.get_sumnail_image(full_item_list[idx], main_ctgr, sub_ctgr)
                             
@@ -276,6 +282,8 @@ if __name__ == '__main__':
                         help='Directory path to save crawling images')
     parser.add_argument('--driver-path', type=str, default=DRIBER_PATH, metavar='DIR_PATH',
                         help='Directory path to saved chrome driver files')
+    parser.add_argument('--test', type=bool, default= False,
+                        help='testing or not')
     args = parser.parse_args()
 
     if not os.path.isdir(args.save_path):
@@ -294,8 +302,8 @@ if __name__ == '__main__':
     }
 
     # 브랜드 리스트 파일 경로 설정
-    # 파일이 존재하는지 확인하고, 존재한다면 파일의 내용을 리스트로 변환합니다.
-    crawler = Crawler(args.mall, args.save_path, args.driver_path)
+    # 파일이 존재하는지 확인하고, 존재한다면 파일의 내용을 리스트로 변환
+    crawler = Crawler(args.mall, args.save_path, args.driver_path, args.test)
     crawler.do_crawling(crawling_list)
     
     print('\n===== Crawling Summary =====')
