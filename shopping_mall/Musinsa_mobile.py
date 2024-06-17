@@ -257,17 +257,26 @@ class Crawler:
 
                     self.get_sumnail_image(full_item_list[idx], main_ctgr, sub_ctgr)
                             
-        # 카테고리 정보 저장
-        ctgr_info_file_name = os.path.join(self.save_path, f'{self.mall}_카테고리_{get_current_time()}.tsv')
+                # 카테고리 수집 완료시 정보 저장
+                ctgr_info_file_name = os.path.join(self.save_path, f'{self.mall}_카테고리_{get_current_time()}.tsv')
+                file_exists = os.path.isfile(ctgr_info_file_name)
+                with open(f'{ctgr_info_file_name}', 'a',newline='') as ctgr_info_file:
+                    writer = csv.writer(ctgr_info_file, delimiter='\t')
+
+                    if not file_exists:
+                        writer.writerow(['main_ctgr','sub_ctgr', 'product_count', 'imgs_count', 'time'])
+                    writer.writerow([main_ctgr, sub_ctgr, self.ctgr_items_count[sub_ctgr], self.ctgr_imgs_count[sub_ctgr], get_current_timenow()])
+
+        # 전체 저장 (중간에 에러로 멈췄다면 정보가 정확하지 않을 수 있음)
+        ctgr_info_file_name = os.path.join(self.save_path, f'{self.mall}_최종완료_{get_current_time()}.tsv')
         file_exists = os.path.isfile(ctgr_info_file_name)
         with open(f'{ctgr_info_file_name}', 'a',newline='') as ctgr_info_file:
             writer = csv.writer(ctgr_info_file, delimiter='\t')
-
             if not file_exists:
                 writer.writerow(['main_ctgr','sub_ctgr', 'product_count', 'imgs_count', 'time'])
-
             for (ctgr_info, items_count),(_,imgs_count) in zip(sorted(self.ctgr_items_count.items()),sorted(self.ctgr_imgs_count.items())):
                 writer.writerow([main_ctgr, ctgr_info, items_count, imgs_count, get_current_timenow()])
+        
 
 import os, os.path as osp
 SAVE_PATH = osp.join(os.getcwd(), 'save')										
@@ -282,7 +291,7 @@ if __name__ == '__main__':
                         help='Directory path to save crawling images')
     parser.add_argument('--driver-path', type=str, default=DRIBER_PATH, metavar='DIR_PATH',
                         help='Directory path to saved chrome driver files')
-    parser.add_argument('--test', type=bool, default= False,
+    parser.add_argument('--test', type=bool, default= True,
                         help='testing or not')
     args = parser.parse_args()
 
