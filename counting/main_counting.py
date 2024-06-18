@@ -1,5 +1,7 @@
 from collections import defaultdict
 import os
+from tqdm import tqdm
+import time
 
 '''
 새로 crawling 하는 무신사, wconcept, 29cm 결과물에 대해서 이미지와 상품수 카운팅코드
@@ -8,18 +10,25 @@ import os
 #신발은 세부 depth가 있어서 경로설정을 하나 아래로 적용
 main_path = '/home/dhlee2/workspace/crawling_code/shopping_mall_crawler/save/Musinsa_mobile'
 # main_path = '/home/dhlee2/workspace/crawling_code/shopping_mall_crawler/save/wconcept/신발'
-main_path ='/home/dhlee2/workspace/crawling_code/shopping_mall_crawler/save/29cm/신발'
+main_path ='/home/dhlee2/Nas/01.Data/02.Virtual_fitting/05.VITON/original_data/06_backup_data/2024_crawled(하의,치마,신발,속옷)/wconcept/신발'
 
 count_info = defaultdict(list)
 
 main_ctgr_list = os.listdir(main_path)
 sex_case = ['여성','남성','혼성']
 exe = ['.jpg','.jpeg','.png']
+# tqdm 객체를 변수에 할당
+pbar = tqdm(range(len(main_ctgr_list)), desc="카운팅 시작")
 
-for main_ctgr in main_ctgr_list:
+
+for i in pbar:
+    # if main_ctgr == '신발':
+    #     continue
+    main_ctgr = main_ctgr_list[i]
     depth_1_path = os.path.join(main_path, main_ctgr)
     sub_ctgr_list = os.listdir(depth_1_path)
     sub_ctgr_dict = dict()
+    pbar.set_description(desc=f"{main_ctgr} 카테고리 카운팅 중 ")
     for sub_ctgr in sub_ctgr_list:
         pr_counts = 0
         img_counts = 0
