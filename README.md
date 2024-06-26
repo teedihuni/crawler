@@ -3,10 +3,19 @@
 쇼핑몰에서 상품 내부 이미지를 수집
 
 * 쇼핑몰 리스트
+    - 일부 쇼핑몰은 특정 카테고리 수집을 위해서 해당 카테고리만을 위한 수집코드를 작성
+    - 카테고리마다 url주소와 변하는 값의 위치가 다르고 페이지 형태나 선택자가 달라지는 경우에는 별도의 코드로 구성함
 
 1. 29cm
-2. musinsa
+    - base
+    - shoes
+2. musinsa_mobile
+    - base
+    - swimming
+    - onepiece
 3. wconcept
+    - clothes
+    - shoes
 4. SSFSHOP
 
 
@@ -23,11 +32,15 @@ pip install -r requirements.py
 * save directory 혹은 log save directory는 적절히 수정
 
 
-## 구현한 기능들
-1. browser control
+## issues
+1. musinsa mobile
+    - 2024 6월 부터 무신사 pc페이지를 모두 모바일 형태로 변경
+    - 상품 로딩이 page방식가 아닌 무한스크롤로 이루어져있음
+
+2. browser control
     - 수집 중간에 중단되버리는 경우 chrome driver 재시작 
 
-2. page_scrolldown2bottom
+3. page_scrolldown2bottom
     - 스크롤 내리기
     - 일부 웹사이트들은 페이지를 내려야 html 로딩이 되는 경우가 있음
 
