@@ -164,7 +164,7 @@ class Crawler:
         try : 
 
             error_name = '카테고리'
-            sub_ctgr_element = self.browser.find_elements(By.CSS_SELECTOR, 'div.sc-887fco-0.dzlzuv a')[1]
+            sub_ctgr_element = self.browser.find_elements(By.CSS_SELECTOR, 'div.sc-887fco-0.dzlzuv a')[-2]
             sub_ctgr = sub_ctgr_element.text
 
             # 상품 명 추출
